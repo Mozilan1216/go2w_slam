@@ -22,6 +22,12 @@ find_package(sensor_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 
+# 给 Python 脚本赋予可执行权限
+install(PROGRAMS
+  src/semantic_voice_node.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 # 确保 launch 和 scripts 文件夹被正确安装
 install(DIRECTORY
   launch
