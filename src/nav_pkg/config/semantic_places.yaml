@@ -1,0 +1,14 @@
+# semantic_places.yaml
+destinations:
+  食堂:
+    x: 15.5
+    y: -3.2
+    yaw: 1.57  # 朝向角度 (弧度)
+  1号楼:
+    x: 45.0
+    y: 12.0
+    yaw: 0.0
+  充电桩:
+    x: 0.0
+    y: 0.0
+    yaw: 0.0
