@@ -30,7 +30,7 @@ install(PROGRAMS
 
 # 确保 launch 和 scripts 文件夹被正确安装
 install(DIRECTORY
-  launch
+  launch rviz
   DESTINATION share/${PROJECT_NAME}
 )
 

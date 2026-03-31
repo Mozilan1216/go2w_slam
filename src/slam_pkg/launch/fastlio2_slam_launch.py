@@ -6,6 +6,8 @@ from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
+    # 你的 RViz 配置文件绝对路径
+    rviz_config_path = '/home/unitree/Workspace/ROS2/ros2_ws/src/slam_pkg/rviz/fastlio2_slam.rviz'
 
     # ==========================================
     # 1. 启动底层硬件：Livox Mid-360 驱动
@@ -22,7 +24,9 @@ def generate_launch_description():
     fast_lio_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('fast_lio'), 'launch', 'mapping.launch.py')
-        )
+        ),
+        # 强行关掉 FAST-LIO2 自带的 RViz
+        launch_arguments={'rviz': 'false'}.items()
     )
 
     # ==========================================
@@ -72,12 +76,23 @@ def generate_launch_description():
     )
 
     # ==========================================
+    # 5. 启动rviz可视化
+    # ==========================================
+    rviz_node = Node(
+    package='rviz2',
+    executable='rviz2',
+    name='rviz2',
+    arguments=['-d', rviz_config_path],
+    output='screen'
+    )
+
+    # ==========================================
     # 编排启动顺序 (加入延迟，让硬件先飞一会)
     # ==========================================
     return LaunchDescription([
         livox_driver_launch,
-        # 延迟 7.0 秒启动 FAST-LIO，等雷达初始化完毕
-        TimerAction(period=7.0, actions=[fast_lio_launch]),
-        # 再延迟 3.0 秒启动 2D 转换和 SLAM Toolbox
-        TimerAction(period=10.0, actions=[pctls_node, slam_toolbox_node])
+        # 延迟 6.0 秒启动 FAST-LIO，等雷达初始化完毕
+        TimerAction(period=6.0, actions=[fast_lio_launch]),
+        # 启动 2D 转换和 SLAM Toolbox
+        TimerAction(period=6.0, actions=[pctls_node, slam_toolbox_node, rviz_node])
     ])
