@@ -60,16 +60,15 @@ def generate_launch_description():
         executable='async_slam_toolbox_node',
         name='slam_toolbox',
         output='screen',
-        parameters=[
-            os.path.join(get_package_share_directory('slam_toolbox'), 'config', 'mapper_params_online_async.yaml'),
-            {
-                'odom_frame': 'camera_init',   # 完美对接 FAST-LIO2 的里程计原点
-                'base_frame': 'body',          # 机器狗自身坐标系
-                'map_frame': 'map',            # 最终生成的 2D 地图坐标系
-                'resolution': 0.05,            # 地图精度 5cm
-                'max_laser_range': 15.0,
-            }
-        ]
+        parameters=[{
+            'use_sim_time': False,         # 强制使用真实系统时间，绝不能错！
+            'odom_frame': 'camera_init',   # 完美对接 FAST-LIO2 的里程计原点
+            'base_frame': 'body',          # 机器狗自身坐标系
+            'map_frame': 'map',            # 最终生成的 2D 地图坐标系
+            'resolution': 0.05,            # 地图精度 5cm
+            'max_laser_range': 15.0,
+            'transform_timeout': 0.5       # 给 TF 树 0.5 秒的容错等待时间，防止乱丢包！
+        }]
     )
 
     # ==========================================
@@ -77,8 +76,8 @@ def generate_launch_description():
     # ==========================================
     return LaunchDescription([
         livox_driver_launch,
-        # 延迟 1.5 秒启动 FAST-LIO，等雷达初始化完毕
-        TimerAction(period=1.5, actions=[fast_lio_launch]),
-        # 再延迟 1.5 秒启动 2D 转换和 SLAM Toolbox
-        TimerAction(period=3.0, actions=[pctls_node, slam_toolbox_node])
+        # 延迟 7.0 秒启动 FAST-LIO，等雷达初始化完毕
+        TimerAction(period=7.0, actions=[fast_lio_launch]),
+        # 再延迟 3.0 秒启动 2D 转换和 SLAM Toolbox
+        TimerAction(period=10.0, actions=[pctls_node, slam_toolbox_node])
     ])
