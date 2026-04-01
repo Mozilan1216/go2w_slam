@@ -88,6 +88,14 @@ def generate_launch_description():
         output='screen'
     )
 
+    # (F) 运动控制桥接：翻译 cmd_vel 给 Go2 底层
+    cmd_vel_translator_node = Node(
+        package='unitree_motion',
+        executable='cmd_vel_translator', # 确保名字和你的 CMakeLists.txt 里一致
+        name='cmd_vel_translator',
+        output='screen'
+    )
+
     # ==========================================
     # 3. 编排启动时序 (关键！)
     # ==========================================
@@ -102,5 +110,5 @@ def generate_launch_description():
         TimerAction(period=6.0, actions=[pctls_node]),
 
         # 10s: 启动 Nav2 导航和 RViz
-        TimerAction(period=10.0, actions=[nav2_bringup, rviz_node])
+        TimerAction(period=10.0, actions=[nav2_bringup, rviz_node, cmd_vel_translator_node])
     ])
