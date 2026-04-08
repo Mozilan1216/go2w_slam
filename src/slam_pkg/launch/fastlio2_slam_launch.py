@@ -7,8 +7,11 @@ from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
     # 你的 RViz 配置文件绝对路径
-    rviz_config_path = '/home/unitree/Workspace/ROS2/ros2_ws/src/slam_pkg/rviz/fastlio2_slam.rviz'
-
+    rviz_config_path = os.path.join(
+        get_package_share_directory('slam_pkg'),
+        'rviz',
+        'fastlio2_slam.rviz'
+    )
     # ==========================================
     # 1. 启动底层硬件：Livox Mid-360 驱动
     # ==========================================
