@@ -10,14 +10,13 @@ def generate_launch_description():
     # ==========================================
     # 1. 路径配置 (请核对你的实际文件名)
     # ==========================================
-    nav_pkg_dir = '/home/unitree/Workspace/ROS2/ros2_ws/src/nav_pkg'
-    # 你的自定义参数文件
-    nav2_params_path = os.path.join(nav_pkg_dir, 'config', 'nav2_params.yaml')
-    # 你之前保存的地图文件 (请确保文件名正确)
-    default_map_path = '/home/unitree/Workspace/ROS2/ros2_ws/src/maps/map_20260331_1125.yaml'
-    # 你的 RViz 配置文件绝对路径
-    rviz_config_path = '/home/unitree/Workspace/ROS2/ros2_ws/src/nav_pkg/rviz/fastlio2_nav.rviz'
+    workspace_dir = '/home/ubuntu/ros2_ws/src'
+    nav_pkg_dir = os.path.join(workspace_dir, 'nav_pkg')
 
+    # 配置文件路径
+    nav2_params_path = os.path.join(nav_pkg_dir, 'config', 'nav2_params.yaml')
+    default_map_path = os.path.join(workspace_dir, 'maps', 'map_0330.yaml')
+    rviz_config_path = os.path.join(nav_pkg_dir, 'rviz', 'fastlio2_nav.rviz')
 
 
     # 官方包路径获取
@@ -54,8 +53,8 @@ def generate_launch_description():
         parameters=[{
             'target_frame': 'body',
             'transform_tolerance': 0.01,
-            'min_height': -0.1,
-            'max_height': 0.3,
+            'min_height': 0.15,
+            'max_height': 0.5,
             'angle_min': -3.14159,
             'angle_max': 3.14159,
             'range_max': 15.0,
@@ -74,8 +73,6 @@ def generate_launch_description():
             'use_sim_time': 'False',
             'params_file': nav2_params_path,
             'autostart': 'True',
-            # 👇👇 必须加上这行，强制加载我们的“高智商”剧本！ 👇👇
-            'default_bt_xml_filename': '/home/unitree/Workspace/ROS2/ros2_ws/src/nav_pkg/config/smart_nav.xml'
         }.items()
     )
 

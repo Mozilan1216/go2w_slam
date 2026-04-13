@@ -21,6 +21,8 @@ venv/
 *.swp
 *.swo
 # *.tar
+.db3
 
 # 系统文件
 .DS_Store
+src/bags/

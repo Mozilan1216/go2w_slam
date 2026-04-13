@@ -68,13 +68,17 @@ def generate_launch_description():
         name='slam_toolbox',
         output='screen',
         parameters=[{
-            'use_sim_time': False,         # 强制使用真实系统时间，绝不能错！
+            'use_sim_time': True,         # 强制使用真实系统时间，绝不能错！
             'odom_frame': 'camera_init',   # 完美对接 FAST-LIO2 的里程计原点
             'base_frame': 'body',          # 机器狗自身坐标系
             'map_frame': 'map',            # 最终生成的 2D 地图坐标系
             'resolution': 0.05,            # 地图精度 5cm
             'max_laser_range': 15.0,
-            'transform_timeout': 0.5       # 给 TF 树 0.5 秒的容错等待时间，防止乱丢包！
+            'transform_timeout': 0.5,       # 给 TF 树 0.5 秒的容错等待时间，防止乱丢包！
+
+            'do_loop_closing': True,                       # 强制开启闭环检测
+            'loop_match_maximum_variance_coarse': 3.0,     # 【降低门槛】允许更大的累积误差也能被强行吸合（默认值通常很小，导致稍微漂一点就拒绝闭环）
+            'loop_match_minimum_chain_size': 3,            # 【降低要求】雷达扫描到几次相似特征就触发闭环（默认值通常是 10 左右，改小更容易触发）
         }]
     )
 
