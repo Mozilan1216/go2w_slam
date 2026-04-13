@@ -15,7 +15,7 @@ def generate_launch_description():
 
     # 配置文件路径
     nav2_params_path = os.path.join(nav_pkg_dir, 'config', 'nav2_params.yaml')
-    default_map_path = os.path.join(workspace_dir, 'maps', 'map_0330.yaml')
+    default_map_path = os.path.join(workspace_dir, 'maps', 'map_20260413_0820.yaml')
     rviz_config_path = os.path.join(nav_pkg_dir, 'rviz', 'fastlio2_nav.rviz')
 
 
