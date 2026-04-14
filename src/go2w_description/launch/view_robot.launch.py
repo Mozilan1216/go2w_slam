@@ -36,7 +36,7 @@ def generate_launch_description():
         executable='rviz2',
         name='rviz2',
         output='screen',
-        arguments=['-d', PathJoinSubstitution([FindPackageShare('go2_rviz'), 'config', 'go2_rviz.rviz'])],
+        arguments=['-d', PathJoinSubstitution([FindPackageShare('go2w_description'), 'config', 'check_joint.rviz'])],
         condition=launch.conditions.IfCondition(LaunchConfiguration('rviz'))
     )
 

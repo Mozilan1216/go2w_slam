@@ -58,15 +58,12 @@ def generate_launch_description():
     prefix = LaunchConfiguration('prefix')
     use_sim_time = LaunchConfiguration('use_sim_time')
 
-    robot_description_content = Command(
-        [
-            PathJoinSubstitution([FindExecutable(name='xacro')]),
-            ' ',
-            PathJoinSubstitution([FindPackageShare('go2w_description'), 'urdf', description_file]),
-            ' ',
-            'prefix:=', prefix
-        ]
-    )
+    # 删掉所有花里胡哨的 FindExecutable，直接硬编码 'xacro ' 字符串
+    robot_description_content = Command([
+        'xacro ',
+        PathJoinSubstitution([FindPackageShare('go2w_description'), 'urdf', description_file]),
+        ' prefix:=', prefix
+    ])
 
     robot_description_param = launch_ros.descriptions.ParameterValue(robot_description_content,
                                                                      value_type=str)
