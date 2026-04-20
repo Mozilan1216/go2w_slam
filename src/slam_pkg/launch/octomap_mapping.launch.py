@@ -54,15 +54,15 @@ def generate_launch_description():
             'resolution': 0.05,            # 地图分辨率 (5cm，与 Nav2 代价图保持一致)
             
             # --- 传感器与射线追踪 ---
-            'sensor_model/max_range': 10.0, # 射线追踪最大距离。太远会吃满 CPU，15米足够铺开校园道路了
+            'sensor_model/max_range': 25.0, # 射线追踪最大距离。太远会吃满 CPU，15米足够铺开校园道路了
             'sensor_model/hit': 0.85,       # 击中障碍物的概率增加步长
             'sensor_model/miss': 0.35,      # 穿透空城区域的概率减少步长（动态剔除移动的人影）
             
             # --- 核心：高度裁剪与投影 ---
             # 这里的 Z 轴是在 frame_id (camera_init) 坐标系下的绝对高度
             # 假设起步时狗的雷达高度是 0，向下切掉地板，向上限制高度
-            'occupancy_min_z': 0.15,       # 剔除地面噪声：只保留绝对高度高于 15cm 的点
-            'occupancy_max_z': 0.70,        # 剔除高空树枝：只保留绝对高度低于 1.5m 的点
+            'occupancy_min_z': 0.3,       # 剔除地面噪声：只保留绝对高度高于 15cm 的点
+            'occupancy_max_z': 2.0,        # 剔除高空树枝：只保留绝对高度低于 1.5m 的点
             
             # 点云输入的高低过滤（避免把二楼的墙壁算进来）
             'pointcloud_min_z': 0.0,

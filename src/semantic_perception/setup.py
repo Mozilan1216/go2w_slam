@@ -25,7 +25,8 @@ setup(
     entry_points={
         'console_scripts': [
             # 这一行是我们要添加的： 终端命令名 = 包名.文件名:主函数名
-            'semantic_detector = semantic_perception.semantic_detector:main'
+            'semantic_detector = semantic_perception.semantic_detector:main',
+            'semantic_navigator = semantic_perception.semantic_navigator:main',
         ],
     },
 )
