@@ -265,7 +265,14 @@ GloabalLocalization::GloabalLocalization() : Node("global_loc_node"),
     pub_odom2map_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom2map", 100000);
     pub_odom2map_kalman_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom2map_kalman", 100000);
 
-    pub_map_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/map", 1);
+    // 1. 定义 QoS：保留最近 1 条数据，并设置为“瞬态本地”持久性
+    auto map_qos = rclcpp::QoS(rclcpp::KeepLast(1)).transient_local();
+
+    // 2. 使用这个 map_qos 创建发布者
+    pub_map_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/map", map_qos);
+
+        
+    // pu_map_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/map", 1);
     pub_submap_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/submap", 1);
     pub_scan2map_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/scan2map", 1);
     pub_scan_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/scan", 1);
