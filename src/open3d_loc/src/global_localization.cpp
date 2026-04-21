@@ -277,9 +277,13 @@ GloabalLocalization::GloabalLocalization() : Node("global_loc_node"),
     loc_fitness_ = 0.0;
     // 注册回调函数
     sub_baselink2odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
-        "/Odometry_loc", 50, std::bind(&GloabalLocalization::CallbackBaselink2Odom, this, std::placeholders::_1));
+        "/Odometry", 50, std::bind(&GloabalLocalization::CallbackBaselink2Odom, this, std::placeholders::_1));
     sub_scan_cur_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-        "/cloud_registered_1", 50, std::bind(&GloabalLocalization::CallbackScan, this, std::placeholders::_1));
+        "/cloud_registered", 50, std::bind(&GloabalLocalization::CallbackScan, this, std::placeholders::_1));
+    // sub_baselink2odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
+    //     "/Odometry_loc", 50, std::bind(&GloabalLocalization::CallbackBaselink2Odom, this, std::placeholders::_1));
+    // sub_scan_cur_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+    //     "/cloud_registered_1", 50, std::bind(&GloabalLocalization::CallbackScan, this, std::placeholders::_1));
     sub_initialpose_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
         "/initialpose", 50, std::bind(&GloabalLocalization::CallbackInitialPose, this, std::placeholders::_1));
 
