@@ -5,6 +5,7 @@ log/
 devel/
 devel_isolated/
 build_isolated/
+open3d141/
 
 # Python 缓存
 __pycache__/
