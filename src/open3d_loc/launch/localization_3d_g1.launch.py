@@ -1,13 +1,25 @@
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument # <--- 新增导入 DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
-from launch.substitutions import PathJoinSubstitution
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration # <--- 新增导入 LaunchConfiguration
+from launch.conditions import IfCondition # <--- 新增导入 IfCondition
 import os
 
 
 def generate_launch_description():
+    # ==========================================
+    # 1. 声明一个可以通过命令行传入的参数 'use_rviz'
+    # ==========================================
+    use_rviz_arg = DeclareLaunchArgument(
+        'use_rviz',
+        default_value='false',  # 默认值为 false（默认打开 RViz）
+        description='Whether to start RViz2'
+    )
+    # 获取这个参数的当前值
+    use_rviz = LaunchConfiguration('use_rviz')
+
     # 获取包路径
     fast_lio_share = FindPackageShare('fast_lio')
     open3d_loc_share = FindPackageShare('open3d_loc')
@@ -20,9 +32,7 @@ def generate_launch_description():
                 'launch',
                 'mapping.launch.py'
             ])
-        ]),
-        # 强行关掉 FAST-LIO2 自带的 RViz
-        launch_arguments={'rviz': 'false'}.items()
+        ])
     )
 
     # 包含 open3d_loc 的 launch 文件
@@ -40,7 +50,7 @@ def generate_launch_description():
     rviz_config_path = PathJoinSubstitution([
         open3d_loc_share,
         'rviz_cfg',
-        'fastlio.rviz'
+        'fastlio_open3d'
     ])
 
     rviz_node = Node(
@@ -49,10 +59,15 @@ def generate_launch_description():
         name='rviz_map_cur',
         arguments=['-d', rviz_config_path],
         output='screen',
-        prefix='nice'  # 对应 launch-prefix="nice"
+        prefix='nice',
+        # ==========================================
+        # 2. 给 RViz 节点加上条件判断！
+        # ==========================================
+        condition=IfCondition(use_rviz)  # 只有当 use_rviz 为 'true' 时，才启动这个节点
     )
 
     return LaunchDescription([
+        use_rviz_arg,      # <--- 3. 别忘了把声明的参数扔进 LaunchDescription 列表里
         fast_lio_launch,
         open3d_loc_launch,
         rviz_node

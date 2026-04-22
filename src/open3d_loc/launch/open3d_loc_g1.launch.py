@@ -24,7 +24,7 @@ def generate_launch_description():
     ])
 
     # 地图文件路径 - 使用绝对路径指向源码目录中的地图文件
-    map_file = '/home/ubuntu/ros2_ws/src/maps/map_20260413_0820.ply'
+    map_file = '/home/ubuntu/ros2_ws/src/maps/map_20260413_0820.pcd'
 
     # 静态TF发布节点 - camera_init to odom
     static_tf_camera_init2odom = Node(
@@ -36,12 +36,12 @@ def generate_launch_description():
 
     # 静态TF发布节点 - imu_link to base_link
     # 修正：父frame是imu_link，子frame是base_link
-    static_tf_imulink2baselink = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        name='imulink2baselink',
-        arguments=['0', '0', '0', '0', '0', '0', '1', 'imu_link', 'base_link']
-    )
+    # static_tf_imulink2baselink = Node(
+    #     package='tf2_ros',
+    #     executable='static_transform_publisher',
+    #     name='imulink2baselink',
+    #     arguments=['0', '0', '0', '0', '0', '0', '1', 'imu_link', 'base_link']
+    # )
 
     # 静态TF发布节点 - base_link to motion_link
     # 修正：base_link是父frame，motion_link是子frame
@@ -59,6 +59,13 @@ def generate_launch_description():
         executable='global_localization_node',
         name='global_localization_node',
         output='screen',
+        # ====== 重映射 ======
+        remappings=[
+            ('/map', '/map_3d'),
+            ('/scan', '/scan_3d') ,
+            ('/cloud_registered_1', '/cloud_registered')
+        ],
+        # ===================
         parameters=[
             config_file,
             {
@@ -104,11 +111,36 @@ def generate_launch_description():
         }]
     )
 
+    pointcloud_to_laserscan_node = Node(
+        package='pointcloud_to_laserscan',
+        executable='pointcloud_to_laserscan_node',
+        name='pointcloud_to_laserscan',
+        output='screen',
+        remappings=[
+            ('cloud_in', '/cloud_registered_body_1'),  # 订阅 FAST-LIO 吐出的实时畸变校正点云
+            ('scan', '/scan_2d')                       # 避开原本占用的 /scan，输出全新的 2D 话题给 Nav2
+        ],
+        parameters=[{
+            'target_frame': 'body', # 统一投影到地面参考系 (如果TF树报错找不到它，可暂时改为 'body' 或 'base_link' 并调整高度)
+            'transform_tolerance': 0.01,
+            'min_height': -0.4,                # 最低高度：0.5米（过滤掉地面和轻微的斜坡干扰）
+            'max_height': 0.2,               # 最高高度：0.95米（正好在你雷达 0.9m 的下方，避免切到雷达支架）
+            'angle_min': -3.14159,            # -180度
+            'angle_max': 3.14159,             # 180度
+            'angle_increment': 0.0087,        # 角度分辨率 (约0.5度)
+            'scan_time': 0.1,                 # 10Hz
+            'range_min': 0.3,                 # 过滤掉雷达近处的车体反光盲区
+            'range_max': 20.0,                # 最大探测距离
+            'use_inf': True,
+        }]
+    )
+
     return LaunchDescription([
         use_sim_time_arg,
         static_tf_camera_init2odom,
-        static_tf_imulink2baselink,
+        # static_tf_imulink2baselink,
         static_tf_base_center,
         global_localization_node,
         # pointcloud_transformer_node
+        pointcloud_to_laserscan_node
     ])

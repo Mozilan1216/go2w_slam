@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 project(open3d_loc)
 
-# --- 策略优化：放在最前面以消除警告 ---
-cmake_policy(SET CMP0074 NEW) # 消除 PCL_ROOT 警告
-cmake_policy(SET CMP0072 NEW) # 消除 Open3D 内部查找 OpenGL 的策略警告
-
 # Default to C++17
 if(NOT CMAKE_CXX_STANDARD)
         set(CMAKE_CXX_STANDARD 17)

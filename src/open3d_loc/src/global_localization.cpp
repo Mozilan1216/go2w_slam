@@ -265,14 +265,8 @@ GloabalLocalization::GloabalLocalization() : Node("global_loc_node"),
     pub_odom2map_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom2map", 100000);
     pub_odom2map_kalman_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom2map_kalman", 100000);
 
-    // 1. 定义 QoS：保留最近 1 条数据，并设置为“瞬态本地”持久性
-    auto map_qos = rclcpp::QoS(rclcpp::KeepLast(1)).transient_local();
-
-    // 2. 使用这个 map_qos 创建发布者
-    pub_map_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/map", map_qos);
-
-        
-    // pu_map_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/map", 1);
+    // pub_map_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/map", 1);
+    pub_map_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/map", rclcpp::QoS(rclcpp::KeepLast(1)).transient_local());
     pub_submap_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/submap", 1);
     pub_scan2map_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/scan2map", 1);
     pub_scan_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("/scan", 1);
@@ -283,15 +277,18 @@ GloabalLocalization::GloabalLocalization() : Node("global_loc_node"),
     loc_frequence_ = 2.0; //
     loc_fitness_ = 0.0;
     // 注册回调函数
+    // 1. 把名字改回 /Odometry，把 QoS 改成 rclcpp::SensorDataQoS()
     sub_baselink2odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
-        "/Odometry", 50, std::bind(&GloabalLocalization::CallbackBaselink2Odom, this, std::placeholders::_1));
+        "/Odometry", rclcpp::SensorDataQoS(), std::bind(&GloabalLocalization::CallbackBaselink2Odom, this, std::placeholders::_1));
+        
+    // 2. 把名字改回 /cloud_registered，把 QoS 改成 rclcpp::SensorDataQoS()
     sub_scan_cur_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-        "/cloud_registered", 50, std::bind(&GloabalLocalization::CallbackScan, this, std::placeholders::_1));
+        "/cloud_registered", rclcpp::SensorDataQoS(), std::bind(&GloabalLocalization::CallbackScan, this, std::placeholders::_1));
     // sub_baselink2odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
     //     "/Odometry_loc", 50, std::bind(&GloabalLocalization::CallbackBaselink2Odom, this, std::placeholders::_1));
     // sub_scan_cur_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     //     "/cloud_registered_1", 50, std::bind(&GloabalLocalization::CallbackScan, this, std::placeholders::_1));
-    sub_initialpose_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+       sub_initialpose_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
         "/initialpose", 50, std::bind(&GloabalLocalization::CallbackInitialPose, this, std::placeholders::_1));
 
     pose_baselink2odom_ = nav_msgs::msg::Odometry();
