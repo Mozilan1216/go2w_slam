@@ -32,7 +32,11 @@ def generate_launch_description():
                 'launch',
                 'mapping.launch.py'
             ])
-        ])
+        ]),
+        # launch_arguments={
+        #     'rviz': 'false',  # <--- 关键！告诉 FAST-LIO 不要启动它的 RViz
+        #     'use_sim_time': 'false'
+        # }.items()
     )
 
     # 包含 open3d_loc 的 launch 文件

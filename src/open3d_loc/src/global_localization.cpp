@@ -277,18 +277,11 @@ GloabalLocalization::GloabalLocalization() : Node("global_loc_node"),
     loc_frequence_ = 2.0; //
     loc_fitness_ = 0.0;
     // 注册回调函数
-    // 1. 把名字改回 /Odometry，把 QoS 改成 rclcpp::SensorDataQoS()
     sub_baselink2odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
-        "/Odometry", rclcpp::SensorDataQoS(), std::bind(&GloabalLocalization::CallbackBaselink2Odom, this, std::placeholders::_1));
-        
-    // 2. 把名字改回 /cloud_registered，把 QoS 改成 rclcpp::SensorDataQoS()
+        "/Odometry", 50, std::bind(&GloabalLocalization::CallbackBaselink2Odom, this, std::placeholders::_1));
     sub_scan_cur_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-        "/cloud_registered", rclcpp::SensorDataQoS(), std::bind(&GloabalLocalization::CallbackScan, this, std::placeholders::_1));
-    // sub_baselink2odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    //     "/Odometry_loc", 50, std::bind(&GloabalLocalization::CallbackBaselink2Odom, this, std::placeholders::_1));
-    // sub_scan_cur_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    //     "/cloud_registered_1", 50, std::bind(&GloabalLocalization::CallbackScan, this, std::placeholders::_1));
-       sub_initialpose_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+        "/cloud_registered", 50, std::bind(&GloabalLocalization::CallbackScan, this, std::placeholders::_1));
+    sub_initialpose_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
         "/initialpose", 50, std::bind(&GloabalLocalization::CallbackInitialPose, this, std::placeholders::_1));
 
     pose_baselink2odom_ = nav_msgs::msg::Odometry();
@@ -659,15 +652,9 @@ void GloabalLocalization::LocalizationInitialize()
     Eigen::Matrix4d mat_baselink2map_cur = Eigen::Matrix4d::Identity();
 
     /// 固定感知子图/历史地图子图大小
-    // OBB_map->extent_ = Eigen::Vector3d(60, 60, 40);
-    // OBB_map->color_ = Eigen::Vector3d(1, 0.5, 0);
-    // OBB_scan->extent_ = Eigen::Vector3d(60, 60, 40);
-    // OBB_scan->color_ = Eigen::Vector3d(0, 1, 0);
-
-    /// 固定感知子图/历史地图子图大小
-    OBB_map->extent_ = Eigen::Vector3d(10000, 10000, 10000);
+    OBB_map->extent_ = Eigen::Vector3d(60, 60, 40);
     OBB_map->color_ = Eigen::Vector3d(1, 0.5, 0);
-    OBB_scan->extent_ = Eigen::Vector3d(10000, 10000, 10000);
+    OBB_scan->extent_ = Eigen::Vector3d(60, 60, 40);
     OBB_scan->color_ = Eigen::Vector3d(0, 1, 0);
 
     double fitness_initial; /// overlap
@@ -707,36 +694,48 @@ void GloabalLocalization::LocalizationInitialize()
 
             *target = *map_fine_crop;
             open3d::utility::LogInfo("before sample, target size: {}, has normal: {}", target->points_.size(), target->HasNormals() ? "true" : "false");
+            ///// 如果目标点云过大，随机下采样到指定数量，保持分布一致性
+            if (target->IsEmpty())
+            {
+                lock_mat_odom2map_.unlock();
+                RCLCPP_WARN(this->get_logger(), "target is empty, skip this localization");
+                continue;
+            }
+            /////
             if (target->points_.size() > static_cast<size_t>(maxpoints_target_))
             {
                 target = target->RandomDownSample(double(maxpoints_target_) / target->points_.size());
             }
+            ///// 如果目标点云没有法线，估计法线并统一朝向
+            if (!target->HasNormals())
+            {
+                target->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(voxelsize_fine_ * 2, 30));
+                target->OrientNormalsToAlignWithDirection();
+            }
+            /////
             open3d::utility::LogInfo("after sample, target size: {}, has normal: {}", target->points_.size(), target->HasNormals() ? "true" : "false");
 
-            //source = pcd_scan->Crop(*OBB_scan);
-
-            // // ===== 核心修改：不要切雷达点云，直接把完整的雷达点云拿过来！ =====
-            // *source = *pcd_scan;
-            // // ==========================================================
-
+            source = pcd_scan->Crop(*OBB_scan);
             open3d::utility::LogInfo("source size: {}, has normal: {}", source->points_.size(), source->HasNormals() ? "true" : "false");
+            if (source->IsEmpty())
+            {
+                lock_mat_odom2map_.unlock();
+                RCLCPP_WARN(this->get_logger(), "source is empty, skip this localization");
+                continue;
+            }
+            
             if (source->points_.size() > static_cast<size_t>(maxpoints_source_))
             {
                 source = source->RandomDownSample(double(maxpoints_source_) / source->points_.size());
             }
+            ////
+            if (!source->HasNormals())
+            {
+                source->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(voxelsize_fine_ * 2, 30));
+                source->OrientNormalsToAlignWithDirection();
+            }
+            //////
             open3d::utility::LogInfo("source size: {}, has normal: {}", source->points_.size(), source->HasNormals() ? "true" : "false");
-
-            // // ================== 第 2 处：新增初始化护盾与法向量 ==================
-            // if (target->points_.size() < 50 || source->points_.size() < 50)
-            // {
-            //     open3d::utility::LogWarning("点云太少，跳过初始化匹配，等待 RViz 给出初始位姿...");
-            //     lock_mat_odom2map_.unlock(); // 必须解锁，否则死锁
-            //     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            //     continue;
-            // }
-            // target->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(0.5, 30));
-            // source->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(0.5, 30));
-            // // ====================================================================
 
             source->Transform(reg_matrix);
             *pcd_scan2map = *source;
@@ -963,14 +962,17 @@ void GloabalLocalization::Localization()
             {
                 target = target->RandomDownSample(double(maxpoints_target_) / target->points_.size());
             }
+            /////////
+            if (!target->HasNormals())
+            {
+                target->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(voxelsize_fine_ * 2, 30));
+                target->OrientNormalsToAlignWithDirection();
+            }
+
+            /////////
             open3d::utility::LogInfo("after sample, target size: {}, has normal: {}", target->points_.size(), target->HasNormals() ? "true" : "false");
 
-            //source = pcd_scan->Crop(*OBB_scan);
-
-            // // ===== 核心修改：不要切雷达点云，直接把完整的雷达点云拿过来！ =====
-            // *source = *pcd_scan;
-            // // ==========================================================
-
+            source = pcd_scan->Crop(*OBB_scan);
             open3d::utility::LogInfo("source size: {}, maxpoints_source_: {}", source->points_.size(), maxpoints_source_);
             source = source->VoxelDownSample(voxelsize_fine_);
             open3d::utility::LogInfo("source size after voxel downsample: {}", source->points_.size());
@@ -978,19 +980,15 @@ void GloabalLocalization::Localization()
             {
                 source = source->RandomDownSample(double(maxpoints_source_) / source->points_.size());
             }
-            open3d::utility::LogInfo("after prerpocess: {}", source->points_.size());
+            ////////
+            if (!source->HasNormals())
+            {
+                source->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(voxelsize_fine_ * 2, 30));
+                source->OrientNormalsToAlignWithDirection();
+            }
+            ////////
 
-            // // ================== 第 3 处：新增实时护盾与法向量 ==================
-            // if (target->points_.size() < 50 || source->points_.size() < 50)
-            // {
-            //     open3d::utility::LogWarning("实时点云太少，跳过本次匹配，防止崩溃...");
-            //     lock_mat_odom2map_.unlock(); // 必须解锁，否则死锁
-            //     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            //     continue;
-            // }
-            // target->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(0.5, 30));
-            // source->EstimateNormals(open3d::geometry::KDTreeSearchParamHybrid(0.5, 30));
-            // //
+            open3d::utility::LogInfo("after prerpocess: {}", source->points_.size());
 
             auto reg_result2 = pcd_tools::RegistrationIcp(source, target, voxelsize_fine_ * 2, reg_matrix, 1);
             reg_matrix = reg_result2.transformation_ * reg_matrix;
