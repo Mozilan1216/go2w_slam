@@ -29,3 +29,7 @@ src/bags/
 
 open3d141/
 open3d141/lib/libOpen3D_3rdparty_assimp_assimp.a
+
+# 忽略所有生成的地图和位姿数据
+*.pcd
+Scans/
