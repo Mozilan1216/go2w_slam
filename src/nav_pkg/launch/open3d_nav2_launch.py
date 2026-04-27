@@ -15,7 +15,7 @@ def generate_launch_description():
 
     # Nav2 2D 栅格地图和配置 (供路径规划避障使用)
     nav2_params_path = os.path.join(nav_pkg_dir, 'config', 'nav2_open3d_params.yaml')
-    default_2d_map_path = os.path.join(workspace_dir, 'maps', 'map_20260413_0820.yaml')
+    default_2d_map_path = os.path.join(workspace_dir, 'map', 'map_20260413_0820.yaml')
     rviz_config_path = os.path.join(nav_pkg_dir, 'rviz', 'fastlio2_nav.rviz') 
 
     # 官方及自定义包路径获取
