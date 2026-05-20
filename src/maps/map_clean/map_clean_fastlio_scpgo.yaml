@@ -1,4 +1,4 @@
-image: map_clean_20260426_1122.pgm
+image: map_clean_fastlio_scpgo.pgm
 mode: trinary
 resolution: 0.05
 origin: [-44.9, -35.2, 0]

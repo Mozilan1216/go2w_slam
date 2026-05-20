@@ -14,8 +14,8 @@ def generate_launch_description():
     nav_pkg_dir = os.path.join(workspace_dir, 'nav_pkg')
 
     # Nav2 2D 栅格地图和配置 (供路径规划避障使用)
-    nav2_params_path = os.path.join(nav_pkg_dir, 'config', 'nav2_open3d_params.yaml')
-    default_2d_map_path = os.path.join(workspace_dir, 'map', 'map_20260413_0820.yaml')
+    nav2_params_path = os.path.join(nav_pkg_dir, 'config', 'nav2_open3d_large_params.yaml')
+    default_2d_map_path = os.path.join(workspace_dir, 'map', 'map_edit_20260426_1109.yaml')
     rviz_config_path = os.path.join(nav_pkg_dir, 'rviz', 'fastlio2_nav.rviz') 
 
     # 官方及自定义包路径获取
@@ -82,6 +82,7 @@ def generate_launch_description():
             'use_sim_time': 'False',
             'params_file': nav2_params_path,
             'autostart': 'True',
+            'amcl': 'False',  # 强行关闭 AMCL，不让它干扰 TF
         }.items()
     )
 
@@ -110,11 +111,11 @@ def generate_launch_description():
         livox_driver,
 
         # 6s: 启动 FAST-LIO2 和点云切片 (等待雷达电机稳定)
-        TimerAction(period=6.0, actions=[fast_lio, pctls_node]),
+        TimerAction(period=3.0, actions=[fast_lio, pctls_node]),
 
         # 10s: 启动全局 3D 重定位 (等待 FAST-LIO2 开始输出高频里程计 /Odometry)
-        TimerAction(period=10.0, actions=[open3d_localization]),
+        TimerAction(period=6.0, actions=[open3d_localization]),
 
         # 14s: 启动 Nav2 导航、RViz、底层运动控制 (等待 map -> odom 的 TF 树建立完毕)
-        TimerAction(period=14.0, actions=[nav2_bringup, rviz_node, cmd_vel_translator_node])
+        TimerAction(period=16.0, actions=[nav2_bringup, rviz_node, cmd_vel_translator_node])
     ])
