@@ -1,0 +1,22 @@
+pcd2pgm:
+  ros__parameters:
+    # 1. 绝对路径
+    pcd_file: /home/ubuntu/ros2_ws/src/maps/map_superlio/map.pcd
+    
+    # 2. 坐标系转换
+    odom_to_lidar_odom: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]      
+    
+    # 3. 开启高度切片
+    flag_pass_through: true                                
+    
+    # 4. 2D 地图分辨率 和 地图话题
+    map_resolution: 0.05                                    
+    map_topic_name: map                                     
+    
+    # 5. 【核心修改】扩大搜索半径
+    thre_radius: 0.5                                  
+    thres_point_count: 10      # 只要有2个点就认为是实体障碍物，坚决不删墙壁
+
+    # 6. Z轴最大值和最小值
+    thre_z_max: 0.2                                  
+    thre_z_min: -2.0                                     
